@@ -15,10 +15,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from cwkapp.views import HandleLoginRequest
+from cwkapp.views import HandleLoginRequest, HandleLogoutRequest
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/login', HandleLoginRequest),   # My api uris
     path('api/login/', HandleLoginRequest),
+    path('api/logout', HandleLogoutRequest),
+    path('api/logout/', HandleLogoutRequest),
 ]
