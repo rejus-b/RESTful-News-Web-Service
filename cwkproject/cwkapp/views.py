@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate, login, logout, backends
 import json
 
 
-from cwkapp.models import Author
+from cwkapp.models import Author, news
 
 # Create your views here.
 
@@ -34,6 +34,7 @@ def HandleLoginRequest(request):
     if user is not None:
         # Authentication successful, try to store the session info
         login(request=request, user=user)
+        request.session.save()
         return JsonResponse({"result": "success", "message": "Succesful login"}, status=200)
     else:
         # Authentication failed
@@ -59,3 +60,39 @@ def HandleLogoutRequest(request):
          return JsonResponse({"result": "error", "message": "Error logging out"}, status=400)
 
     
+
+@csrf_exempt
+@login_required
+def HandlePostRequest(request):
+    http_bad_response = HttpResponseBadRequest()
+    http_bad_response["Content-Type"] = "text/plain"
+
+    # Check if POST
+    if request.method != "POST":
+        http_bad_response.content = "Only POST requests are allowed for this resource\n"
+        http_bad_response.status_code = 405
+        return http_bad_response
+        
+    data = json.loads(request.body.decode('utf-8'))
+    headline = data.get('headline')
+    category = data.get('category')
+    region = data.get('region')
+    details = data.get('details')
+    
+
+    if not all([headline, category, region, details]):
+        return HttpResponse("Incomplete data. Please provide all required fields.", status=400)
+
+    author = request.user
+    print(author)
+
+    news.objects.create(
+        headline,
+        category=category,
+        region=region,
+        details=details,
+        author=author
+        date=None#Figure this out 
+    )
+
+    return JsonResponse({"message": "Story posted successfully."}, status=201)
