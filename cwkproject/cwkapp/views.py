@@ -23,10 +23,9 @@ def HandleLoginRequest(request):
         http_bad_response.status_code = 405
         return http_bad_response
 
-    # Load JSON data from the request body
-    data = json.loads(request.body.decode("utf-8"))
-    username = data.get("username", "")
-    password = data.get("password", "")
+    # Load form data from the request
+    username = request.POST.get("username", "")
+    password = request.POST.get("password", "")
 
     # Now compare it
     user = authenticate(request, username=username, password=password)
@@ -35,10 +34,10 @@ def HandleLoginRequest(request):
         # Authentication successful, try to store the session info
         login(request=request, user=user)
         request.session.save()
-        return JsonResponse({"result": "success", "message": "Succesful login"}, status=200)
+        return HttpResponse("Successful login", status=200, content_type="text/plain")
     else:
         # Authentication failed
-        return JsonResponse({"result": "error", "message": "Invalid credentials"}, status=401)
+        return HttpResponse("Invalid credentials", status=401, content_type="text/plain")
     
 
 @csrf_exempt
@@ -55,9 +54,9 @@ def HandleLogoutRequest(request):
     try:
         # Try logout the session
         logout(request=request)
-        return JsonResponse({"result": "success", "message": "Logged out"}, status=200)
+        return HttpResponse("Logged out", status=200, content_type="text/plain")
     except:
-         return JsonResponse({"result": "error", "message": "Error logging out"}, status=400)
+        return HttpResponse("Error logging out", status=400, content_type="text/plain")
 
     
 
@@ -70,29 +69,30 @@ def HandlePostRequest(request):
     # Check if POST
     if request.method != "POST":
         http_bad_response.content = "Only POST requests are allowed for this resource\n"
-        http_bad_response.status_code = 405
+        http_bad_response.status_code = 503 # Spec says only 503s
         return http_bad_response
         
-    data = json.loads(request.body.decode('utf-8'))
-    headline = data.get('headline')
-    category = data.get('category')
-    region = data.get('region')
-    details = data.get('details')
-    
+    headline = request.POST.get('headline')
+    category = request.POST.get('category')
+    region = request.POST.get('region')
+    details = request.POST.get('details')
 
     if not all([headline, category, region, details]):
-        return HttpResponse("Incomplete data. Please provide all required fields.", status=400)
+        return HttpResponse("Incomplete data. Please provide all required fields.", status=400, content_type="text/plain")
 
     author = request.user
     print(author)
+    return HttpResponse("Story posted successfully.", status=201, content_type="text/plain")
+    # try:
+    #     news.objects.create(
+    #         headline,
+    #         category=category,
+    #         region=region,
+    #         details=details,
+    #         author=author
+    #         date=None#Figure this out 
+    #     )
 
-    news.objects.create(
-        headline,
-        category=category,
-        region=region,
-        details=details,
-        author=author
-        date=None#Figure this out 
-    )
-
-    return JsonResponse({"message": "Story posted successfully."}, status=201)
+    #     return HttpResponse("Story posted successfully.", status=201, content_type="text/plain")
+    # except:
+    #     return HttpResponse("Error posting story.", status=503, content_type="text/plain")
