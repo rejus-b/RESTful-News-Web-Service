@@ -15,7 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from cwkapp.views import HandleLoginRequest, HandleLogoutRequest, HandlePostRequest
+from cwkapp.views import HandleLoginRequest, HandleLogoutRequest, HandlePostRequest, HandleGetStoriesRequest, HandleDeleteRequest
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,6 +23,10 @@ urlpatterns = [
     path('api/login/', HandleLoginRequest),
     path('api/logout', HandleLogoutRequest),
     path('api/logout/', HandleLogoutRequest),
-    path('api/stories', HandlePostRequest),
-    path('api/stories/', HandlePostRequest),
+    # path('api/stories', HandleGetStoriesRequest, name='get_stories'),   # Get stories before post url
+    path('api/stories/', HandleGetStoriesRequest, name='get_stories'),
+    path('api/stories', HandlePostRequest, name='post_stories'),
+    # path('api/stories/', HandlePostRequest, name='post_stories'),
+    # path('api/stories/<int:story_key>/', HandleDeleteRequest),
+    path('api/stories/<int:key>', HandleDeleteRequest),
 ]

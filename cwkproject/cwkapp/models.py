@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.auth.models import User
+
 
 catergory_choices = [('pol', "Political"), ('art', "Art"), ('tech', "Technical"), ('trivia', "Trivial")]
 region_choices = [('uk', "British News"), ('eu', "European News"), ('w', "World News")]
@@ -6,9 +8,11 @@ region_choices = [('uk', "British News"), ('eu', "European News"), ('w', "World 
 # Create your models here.
 
 class Author(models.Model):
-    name = models.CharField(max_length=128)
-    username = models.CharField(max_length=64, unique=True)
-    password = models.CharField(max_length=128)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, default=None)
+    authorName = models.CharField(max_length=128)
+    # author = models.CharField(max_length=128)
+    # username = models.CharField(max_length=64, unique=True)
+    # password = models.CharField(max_length=128)
 
 class news(models.Model):
     uniquekey = models.AutoField(primary_key=True)
