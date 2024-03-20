@@ -23,7 +23,10 @@ class Client:
 
         # Set the url if http is not included, e.g. when calling localhost
         if not url.startswith("http://") and not url.startswith("https://"):
-            self.base_url = "http://" + url
+            if url.startswith("localhost"):
+                self.base_url = "http://" + url
+            else:
+                self.base_url = "https://" + url
         
         login_url = f"{self.base_url}/api/login"
 
@@ -129,7 +132,7 @@ class Client:
 
 
     def get_stories(self):
-        url = "http://localhost:8000/api/stories/"  # Replace "your-api-url" with the actual URL of your API
+        url = f"{self.base_url}/api/stories/" 
         params = {
             "story_cat": "*",
             "story_region": "*",

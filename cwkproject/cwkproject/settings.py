@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-y3l0(^e*s@#)$-vne1fkm+bod&g83r+w-yje(nubt+-ss#0*n&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["ed20rb5.pythonanywhere.com"]
 
 # import django.contrib.sessions.backends.db
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
