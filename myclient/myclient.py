@@ -1,5 +1,6 @@
 import requests
 from getpass import getpass # For secure password input
+import random
 
 class Client:
     def __init__(self):
@@ -138,16 +139,32 @@ class Client:
         reg_flag = "*"
         date_flag = "*"
 
+        # ANSI escape codes pretty print headers
+        GREEN = '\033[92m'
+        RED = "\033[91m"
+        YELLOW = "\033[33m"
+        RESET = '\033[0m'
+
+        # Sanitise inputs
+        catergory_choices = [('pol', "Political"), ('art', "Art"), ('tech', "Technical"), ('trivia', "Trivial")]
+        region_choices = [('uk', "British News"), ('eu', "European News"), ('w', "World News")]
+
         # Parse the switches
         for arg in args:
             if arg.startswith("-id="):
                 id_flag = arg.split("=")[1].upper()
             elif arg.startswith("-cat="):
-                cat_flag = arg.split("=")[1].upper()
+                cat_flag = arg.split("=")[1]
+                if cat_flag not in [choice[0] for choice in catergory_choices]:
+                    print("Bad category flag")
+                    return
             elif arg.startswith("-reg="):
-                reg_flag = arg.split("=")[1].upper()
+                reg_flag = arg.split("=")[1]
+                if reg_flag not in [choice[0] for choice in region_choices]:
+                    print("Bad region flag")
+                    return
             elif arg.startswith("-date="):
-                date_flag = arg.split("=")[1].upper()
+                date_flag = arg.split("=")[1]
 
         # First we need to extract all news agencies in the web service
         directory_url = "https://newssites.pythonanywhere.com/api/directory/"
@@ -176,41 +193,46 @@ class Client:
         # Now that we have matching news agencies lets parse it
         # First set the url for each valid agency
         count = 0
+
+        # Pick 20 random agencies to keep 
+        directory_data = random.sample(directory_data, min(len(directory_data), 20))
+
         for agency in directory_data:
-            if count < 20:
-                agency_url = f"{agency["url"]}/api/stories/"
-                
-                params = {
-                    "story_cat": cat_flag,
-                    "story_region": reg_flag,
-                    "story_date": date_flag
-                }
+            agency_url = f"{agency["url"]}/api/stories/"
+            
+            params = {
+                "story_cat": cat_flag,
+                "story_region": reg_flag,
+                "story_date": date_flag
+            }
 
-                # Now that you set the url, search through it
-                try:
-                    response = requests.get(agency_url, params=params)
-                    if response.status_code == 200:
-                        stories = response.json()["stories"]
-                        for story in stories:
-                            print("-" * 50)
-                            print("Key:", story["key"])
-                            print("Headline:", story["headline"])
-                            print("Category:", story["story_cat"])
-                            print("Region:", story["story_region"])
-                            print("Author:", story["author"])
-                            print("Date:", story["story_date"])
-                            print("Details:", story["story_details"])
-                            print("-" * 50)
-                    elif response.status_code == 404:
-                        print(f"No stories found at: {agency_url}")
-                    else:
-                        print("Failed to get stories. Status code:", response.status_code)
-                except Exception as e:
-                    print("Error while getting stories:", e)
+            # Now that you set the url, search through it
+            try:
+                response = requests.get(agency_url, params=params)
+                if response.status_code == 200:
+                    stories = response.json()["stories"]
+                    if not stories:
+                        continue # No stories here even if succesful return
+                    print(YELLOW + f"\n\nStories collected from: " + RESET + f"{agency_url}")
+                    for story in stories:
+                        print("-" * 125)
+                        print("{:<50}".format(GREEN + "Headline" + RESET))
+                        print("{:<50}".format(story["headline"]))
+                        print("")
+                        print("{:<25} {:<15} {:<15}".format(GREEN + "Category", "Region", "Key" + RESET))
+                        print("{:<20} {:<15} {:<50}".format( story["story_cat"], story["story_region"], story["key"]))
+                        print("")
+                        print("{:<25} {:15} {:<15}".format(GREEN + "Author", "Date", "Details" + RESET))
+                        print("{:<20} {:<15} {:<50}".format(story["author"], story["story_date"], story["story_details"]))
+                        print("-" * 125)
+                elif response.status_code == 404:
+                    print(RED + f"\n\nNo stories found at: {agency_url} Error"  + RESET + " 404")
+                else:
+                    print(RED + f"\n\nFailed to get stories at: {agency_url}\nStatus code:" + RESET, response.status_code)
+            except Exception as e:
+                print("Error while getting stories:", e)
 
-                # Only print 20 stories
-                count += 1
-        print("\nPrinted all storie from the first 20 news agencies\n")
+        print("\nPrinted all specified stories from 20 random news agencies.\n")
 
     def list(self):
         # This command is used to list all news services in the directory. 
@@ -222,22 +244,46 @@ class Client:
             if response.status_code == 200:
                 data = response.json()
                 agency_list = data 
-                count = 0
+
+                # Pick 20 random agencies to keep 
+                agency_list = random.sample(agency_list, min(len(agency_list), 20))
+
                 for agency in agency_list:
-                    if count < 20:
-                        print("-" * 50)
-                        print(f"Agency Name: {agency.get("agency_name")}")
-                        print(f"URL: {agency.get("url")}")
-                        print(f"Agency Code: {agency.get("agency_code")}")
-                        print("-" * 50)
-                        count += 1
-                print("\nListed the first 20 news agencies.\n")
+                    print("-" * 50)
+                    print(f"Agency Name: {agency.get("agency_name")}")
+                    print(f"URL: {agency.get("url")}")
+                    print(f"Agency Code: {agency.get("agency_code")}")
+                    print("-" * 50)
+
+                print("\nListed 20 random news agencies.\n")
             else:
                 print(f"Could not list: {response.content.decode()}")
         except:
             print("A list of news agencies could not be curated.")
             
+    def register(self):
+        # To register to a news service
+        url = "https://newssites.pythonanywhere.com/api/directory/"
 
+        payload = {
+            "agency_name": "",
+            "url": "",
+            "agency_code": ""
+        }
+
+        # payload = {
+        #     "agency_name": "Rejus Bulevicius News Agency",
+        #     "url": "https://ed20rb5.pythonanywhere.com/",
+        #     "agency_code": "RRB03"
+        # }
+
+        response = self.session.post(url=url, json=payload)
+
+        if response.status_code == 201:
+            print("Succesfully registered")
+        else:
+            print("Failed with status code: ", response.status_code)
+            print("Response: ", response.text)
 
     ## This is meant to be local testing only right now
     # def get_stories(self):
@@ -275,7 +321,7 @@ class Client:
 client = Client()
 
 while True:
-    command = input("Enter a command (login, logout, post, delete <key>), news, list: ").lower()
+    command = input("Enter a command (login, logout, post, delete <key>, news, list): ").lower()
 
     if command == "login":
         client.login()
@@ -291,7 +337,7 @@ while True:
         client.news(args)
     elif command == "list":
         client.list()
-    elif command == "get_stories":
-        client.get_stories()
+    elif command == "register":
+        client.register()
     else:
-        print("Invalid command. Available commands: login, logout, post, delete <key>")
+        print("Invalid command. Available commands: login, logout, post, delete <key>, news, list")
