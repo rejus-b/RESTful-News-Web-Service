@@ -130,35 +130,144 @@ class Client:
             print(f"Error during delete: {str(e)}")
 
 
+    def news(self, args):
+        # This command is used to request news stories from a web service.
+        # Flag include: -id, -cat, -reg, -date
+        id_flag = "*"
+        cat_flag = "*"
+        reg_flag = "*"
+        date_flag = "*"
 
-    def get_stories(self):
-        url = f"{self.base_url}/api/stories/" 
-        params = {
-            "story_cat": "*",
-            "story_region": "*",
-            "story_date": "*"
-        }
+        # Parse the switches
+        for arg in args:
+            if arg.startswith("-id="):
+                id_flag = arg.split("=")[1].upper()
+            elif arg.startswith("-cat="):
+                cat_flag = arg.split("=")[1].upper()
+            elif arg.startswith("-reg="):
+                reg_flag = arg.split("=")[1].upper()
+            elif arg.startswith("-date="):
+                date_flag = arg.split("=")[1].upper()
+
+        # First we need to extract all news agencies in the web service
+        directory_url = "https://newssites.pythonanywhere.com/api/directory/"
 
         try:
-            response = requests.get(url, params=params) #params=params
+            response = self.session.get(directory_url)
             if response.status_code == 200:
-                stories = response.json()["stories"]
-                for story in stories:
-                    print("-" * 50)
-                    print("Key:", story["key"])
-                    print("Headline:", story["headline"])
-                    print("Category:", story["story_cat"])
-                    print("Region:", story["story_region"])
-                    print("Author:", story["author"])
-                    print("Date:", story["story_date"])
-                    print("Details:", story["story_details"])
-                    print("-" * 50)
-            elif response.status_code == 404:
-                print("No stories found.")
+                directory_data = response.json()
+        except:
+            print("Could not extract the web service news agencies")
+        
+
+        # Now we need to check which ids we want
+        if id_flag != "*":
+            try:
+                matching_agencies = []
+                
+                for agency in directory_data:
+                    if agency["agency_code"] == id_flag:
+                        matching_agencies.append(agency)
+                
+                directory_data = matching_agencies
+            except:
+                print("Could not find matching news agencies and IDs")
+
+        # Now that we have matching news agencies lets parse it
+        # First set the url for each valid agency
+        count = 0
+        for agency in directory_data:
+            if count < 20:
+                agency_url = f"{agency["url"]}/api/stories/"
+                
+                params = {
+                    "story_cat": cat_flag,
+                    "story_region": reg_flag,
+                    "story_date": date_flag
+                }
+
+                # Now that you set the url, search through it
+                try:
+                    response = requests.get(agency_url, params=params)
+                    if response.status_code == 200:
+                        stories = response.json()["stories"]
+                        for story in stories:
+                            print("-" * 50)
+                            print("Key:", story["key"])
+                            print("Headline:", story["headline"])
+                            print("Category:", story["story_cat"])
+                            print("Region:", story["story_region"])
+                            print("Author:", story["author"])
+                            print("Date:", story["story_date"])
+                            print("Details:", story["story_details"])
+                            print("-" * 50)
+                    elif response.status_code == 404:
+                        print(f"No stories found at: {agency_url}")
+                    else:
+                        print("Failed to get stories. Status code:", response.status_code)
+                except Exception as e:
+                    print("Error while getting stories:", e)
+
+                # Only print 20 stories
+                count += 1
+        print("\nPrinted all storie from the first 20 news agencies\n")
+
+    def list(self):
+        # This command is used to list all news services in the directory. 
+        url = "https://newssites.pythonanywhere.com/api/directory/"
+
+        try:
+            response = self.session.get(url)
+
+            if response.status_code == 200:
+                data = response.json()
+                agency_list = data 
+                count = 0
+                for agency in agency_list:
+                    if count < 20:
+                        print("-" * 50)
+                        print(f"Agency Name: {agency.get("agency_name")}")
+                        print(f"URL: {agency.get("url")}")
+                        print(f"Agency Code: {agency.get("agency_code")}")
+                        print("-" * 50)
+                        count += 1
+                print("\nListed the first 20 news agencies.\n")
             else:
-                print("Failed to get stories. Status code:", response.status_code)
-        except Exception as e:
-            print("Error while getting stories:", e)
+                print(f"Could not list: {response.content.decode()}")
+        except:
+            print("A list of news agencies could not be curated.")
+            
+
+
+    ## This is meant to be local testing only right now
+    # def get_stories(self):
+    #     url = f"{self.base_url}/api/stories/" 
+    #     params = {
+    #         "story_cat": "*",
+    #         "story_region": "*",
+    #         "story_date": "*"
+    #     }
+
+    #     try:
+    #         response = requests.get(url, params=params) #params=params
+    #         if response.status_code == 200:
+    #             stories = response.json()["stories"]
+    #             for story in stories:
+    #                 print("-" * 50)
+    #                 print("Key:", story["key"])
+    #                 print("Headline:", story["headline"])
+    #                 print("Category:", story["story_cat"])
+    #                 print("Region:", story["story_region"])
+    #                 print("Author:", story["author"])
+    #                 print("Date:", story["story_date"])
+    #                 print("Details:", story["story_details"])
+    #                 print("-" * 50)
+    #         elif response.status_code == 404:
+    #             print("No stories found.")
+    #         else:
+    #             print("Failed to get stories. Status code:", response.status_code)
+    #     except Exception as e:
+    #         print("Error while getting stories:", e)
 
 
 
@@ -166,7 +275,7 @@ class Client:
 client = Client()
 
 while True:
-    command = input("Enter a command (login, logout, post, delete <key>): ").lower()
+    command = input("Enter a command (login, logout, post, delete <key>), news, list: ").lower()
 
     if command == "login":
         client.login()
@@ -175,8 +284,13 @@ while True:
     elif command == "post":
         client.post_story()
     elif command.startswith("delete"):
-        split = command.split()
-        client.delete(split[1])
+        args = command.split()
+        client.delete(args[1])
+    elif command.startswith("news"):
+        args = command.split()[1:]
+        client.news(args)
+    elif command == "list":
+        client.list()
     elif command == "get_stories":
         client.get_stories()
     else:
