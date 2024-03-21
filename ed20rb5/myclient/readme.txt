@@ -12,7 +12,7 @@
     delete <key> - Lets an authorised used to delete their own news story of X key
     news - Lets you view 20 random news agencies and all stories that match flags:
                 Flags include: -id, -cat, -reg, -date
-                e.g. -id=RRB03
+                e.g. `news -id=RRB03 -date=2024-02-10`
     list - Lists 20 random active news agencies
 
 2. https://ed20rb5.pythonanywhere.com/

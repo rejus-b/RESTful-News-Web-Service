@@ -65,7 +65,7 @@ class Client:
         
         logout_url = f"{self.base_url}/api/logout"
     
-        response = self.session.post(logout_url) #, headers={'Cookie': f'sessionid={self.session_cookies}'}
+        response = self.session.post(logout_url)
         # response_data = response.json()
 
         if response.status_code == 200:
