@@ -5,6 +5,7 @@ import re
 from urllib.parse import urljoin
 from nltk.corpus import stopwords
 from collections import Counter
+import pprint
 
 def get_base_url(url):
     parts = url.split('/')
@@ -113,9 +114,14 @@ def print_index(word):
     try:
         for value in inverted_index:
             if value == word:
-                print(inverted_index[value])
+                pprint.pp(inverted_index[value])
+                return
+        print ("Word not found")
     except Exception as e:
-        print("Error printing: ", e)
+        if inverted_index == None:
+            print("Load the list first!")
+        else:
+            print("Error printing: ", e)
 
 # Command line client
 inverted_index = None
