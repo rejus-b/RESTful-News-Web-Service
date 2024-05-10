@@ -107,6 +107,15 @@ def load_index(filename):
         return None
 
 
+### Print index
+def print_index(word):
+    word = word.lower()
+    try:
+        for value in inverted_index:
+            if value == word:
+                print(inverted_index[value])
+    except Exception as e:
+        print("Error printing: ", e)
 
 # Command line client
 inverted_index = None
@@ -124,8 +133,7 @@ while True:
         if len(args) < 2:
             print("Missing arguments for print command.")
         else:
-            #print_index(args[1])
-            pass
+            print_index(args[1])
     elif command.startswith("find"):
         args = command.split()
         if len(args) < 2:
