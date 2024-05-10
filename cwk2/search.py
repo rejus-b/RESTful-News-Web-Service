@@ -94,6 +94,17 @@ def build():
     else:
         print("Error: Failed to create inverted index.")
         return None
+    
+
+
+### Load index
+def load_index(filename):
+    try:
+        with open(filename, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print(f"Error: File '{filename}' not found.")
+        return None
 
 
 
@@ -105,8 +116,9 @@ while True:
     if command == "build":
         inverted_index = build()
     elif command == "load":
-        # load_index()
-        pass
+        inverted_index = load_index("inverted_index.json")
+        if inverted_index:
+            print("Inverted index loaded successfully.")
     elif command.startswith("print"):
         args = command.split()
         if len(args) < 2:
