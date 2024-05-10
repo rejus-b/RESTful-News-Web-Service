@@ -55,10 +55,10 @@ def crawl_website(url, max_pages=None):
 
     def update_index(texts, url):
         for text in texts:
-            # Tokenize the text
+            # Tokenise the text
             words = re.findall(r'\w+', text.lower())
             # Filter out stop words using NLTK stopwords
-            words = [word for word in words if word not in stop_words]
+            words = [word for word in words] #  if word not in stop_words
 
             # Update the inverted index
             for word in words:
@@ -108,7 +108,7 @@ def load_index(filename):
         return None
 
 
-### Print index
+### Print word
 def print_index(word):
     word = word.lower()
     try:
@@ -122,6 +122,101 @@ def print_index(word):
             print("Load the list first!")
         else:
             print("Error printing: ", e)
+
+
+
+### Find word
+def find_pages(words):
+
+    # Sublists for each URL per word
+    url_list = []
+    for word in words:
+        url_subset = set()
+        url_list.append(url_subset)
+
+    # Find the urls per word
+    def word_urls(word, index):
+        word = word.lower()
+        try:
+            for value in inverted_index:
+                if value == word:
+                    for key in inverted_index[value]:
+                        # Append it to the correct set
+                        url_list[index].add(key)
+                    return
+            print ("Word not found")
+        except Exception as e:
+            if inverted_index == None:
+                print("Load the list first!")
+            else:
+                print("Error printing: ", e)
+
+
+    ## Regular find words
+    
+    # Attaches urls to a set for each word
+    for i in range (0, len(words)):
+        word_urls(words[i], i)
+    
+
+    # Three tier intersection
+    for i in range (0, len(url_list) - 1):
+        intersection_set = url_list[i].intersection(url_list[i+1])
+
+    # Two tier intersection 
+
+    if len(words) == 3:
+        set0_set1 = {}
+        set0_set2 = {}
+        set1_set2 = {}
+
+        set0_set1 = url_list[0].intersection(url_list[1])
+        set0_set2 = url_list[0].intersection(url_list[2])
+        set1_set2 = url_list[1].intersection(url_list[2])
+
+        
+        print ("\nIntersection of URLs containing words : ", words)
+        pprint.pp(intersection_set)
+        print("\n")
+
+        print("\nTwo-pair intersections : ", words[0], " ", words[1])
+        pprint.pp(intersection_set.intersection(set0_set1))
+        print("\n")
+
+        print("\nTwo-pair intersections : ", words[0], " ", words[2])
+        pprint.pp(intersection_set.intersection(set0_set2))
+        print("\n")
+
+        print("\nTwo-pair intersections : ", words[1], " ", words[2])
+        pprint.pp(intersection_set.intersection(set1_set2))
+        print("\n")
+
+        known_url_set = set()  # Initialize known_url_set as an empty set
+
+        known_url_set.update(intersection_set)
+        known_url_set.update(set0_set1)
+        known_url_set.update(set0_set2)
+        known_url_set.update(set1_set2)
+
+
+    # Nice print of all the urls that contain a word
+    for i in range (0, len(url_list)):
+        print("Word : " + words[i])
+        if len(words) == 3:
+            url_list[i] = url_list[i] - known_url_set
+        pprint.pp(url_list[i])
+        print("\n")
+
+
+
+
+'''
+    1. Use print to find all the urls associated with every word in words
+    2. Create a nested list for each one [[word1], [word2]]
+    3. Find the intersection in these urls 
+    4. Create a frequency analysis of each section
+
+'''
 
 # Command line client
 inverted_index = None
@@ -145,8 +240,13 @@ while True:
         if len(args) < 2:
             print("Missing arguments for find command.")
         else:
-            #find_pages(args[1])
-            pass
+            # Convert the args to a list to pass
+            counter = 1
+            args_list = []
+            while (counter < len(args)):
+                args_list.append(args[counter])
+                counter += 1
+            find_pages(args_list)
     elif command == "exit":
         print("Exiting search tool.")
         break
