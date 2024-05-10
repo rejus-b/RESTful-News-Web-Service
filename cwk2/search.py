@@ -4,13 +4,20 @@ from bs4 import BeautifulSoup
 import re
 from urllib.parse import urljoin
 from nltk.corpus import stopwords
-from collections import Counter
+#from collections import Counter
 import pprint
+import time
 
+# split  https://quotes.toscrape.com/tag/love/ > 
+#       https://quotes.toscrape.com
+#
+#       Not actually required since the url is constant,
+#       but it makes the code useful if you want to to take it to another site.
 def get_base_url(url):
     parts = url.split('/')
     return '/'.join(parts[:3])
 
+### Build the index tree
 def crawl_website(url, max_pages=None):
     base_url = get_base_url(url)
     visited_urls = set()
@@ -18,15 +25,19 @@ def crawl_website(url, max_pages=None):
     total_pages = 0
 
     # Download NLTK stopwords
+    # Kind of jank, some words like 'not' are considerd stop words
     stop_words = set(stopwords.words('english'))
 
     def scrape_page(current_url):
         visited_urls.add(current_url)
 
         try:
+            # time.sleep(6)
             response = requests.get(current_url)
             if response.status_code == 200:
                 print("Scraping:", current_url)
+
+                # Use a html parser on the response text from the URL
                 soup = BeautifulSoup(response.content, 'html.parser')
 
                 # Extract quote texts
@@ -38,7 +49,7 @@ def crawl_website(url, max_pages=None):
                 update_index(tags, current_url)
 
                 # Extract author description if available
-                author_description = soup.find('div', class_='author-description')
+                author_description = soup.find('div', class_='author-details')
                 if author_description:
                     description_text = author_description.text.strip()
                     update_index([description_text], current_url)
@@ -58,7 +69,7 @@ def crawl_website(url, max_pages=None):
             # Tokenise the text
             words = re.findall(r'\w+', text.lower())
             # Filter out stop words using NLTK stopwords
-            words = [word for word in words] #  if word not in stop_words
+            words = [word for word in words if word not in stop_words]
 
             # Update the inverted index
             for word in words:
@@ -119,7 +130,7 @@ def print_index(word):
         print ("Word not found")
     except Exception as e:
         if inverted_index == None:
-            print("Load the list first!")
+            print("Load the index first!")
         else:
             print("Error printing: ", e)
 
@@ -134,8 +145,9 @@ def find_pages(words):
     # Prepare the search words
     search_words = [word.lower() for word in words]
 
-    # Initialize a dictionary to store page scores
+    # Initialise a dictionary to store page scores
     page_scores = {}
+    total_pages = 0
 
     # Calculate scores for each page based on ranking criteria
     for word in search_words:
@@ -143,15 +155,18 @@ def find_pages(words):
             for url, frequency in inverted_index[word].items():
                 if url not in page_scores:
                     page_scores[url] = 0
+                    total_pages += 1
                 page_scores[url] += frequency
 
     # Sort pages based on ranking criteria
+    # This creates a tuple based off the dictionary of page scores with a negated frequency and tie breaked by the URL spelling
     sorted_pages = sorted(page_scores.items(), key=lambda x: (-x[1], x[0]))
 
     # Display search results
-    print("Search Results:")
+    print("\nSearch Results:")
     for url, score in sorted_pages:
-        print(f"{url} - Score: {score}")
+        print(f"{url}")
+    print("\nTotal pages: " + str(total_pages) + "\n")
 
 
 
