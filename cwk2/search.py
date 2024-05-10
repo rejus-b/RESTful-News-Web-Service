@@ -142,10 +142,8 @@ def find_pages(words):
         print("Load the index first!")
         return
 
-    # Prepare the search words
     search_words = [word.lower() for word in words]
 
-    # Initialise a dictionary to store page scores
     page_scores = {}
     total_pages = 0
 
@@ -162,7 +160,6 @@ def find_pages(words):
     # This creates a tuple based off the dictionary of page scores with a negated frequency and tie breaked by the URL spelling
     sorted_pages = sorted(page_scores.items(), key=lambda x: (-x[1], x[0]))
 
-    # Display search results
     print("\nSearch Results:")
     for url, score in sorted_pages:
         print(f"{url}")
