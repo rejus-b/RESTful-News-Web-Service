@@ -127,85 +127,31 @@ def print_index(word):
 
 ### Find word
 def find_pages(words):
+    if inverted_index is None:
+        print("Load the index first!")
+        return
 
-    # Sublists for each URL per word
-    url_list = []
-    for word in words:
-        url_subset = set()
-        url_list.append(url_subset)
+    # Prepare the search words
+    search_words = [word.lower() for word in words]
 
-    # Find the urls per word
-    def word_urls(word, index):
-        word = word.lower()
-        try:
-            for value in inverted_index:
-                if value == word:
-                    for key in inverted_index[value]:
-                        # Append it to the correct set
-                        url_list[index].add(key)
-                    return
-            print ("Word not found")
-        except Exception as e:
-            if inverted_index == None:
-                print("Load the list first!")
-            else:
-                print("Error printing: ", e)
+    # Initialize a dictionary to store page scores
+    page_scores = {}
 
+    # Calculate scores for each page based on ranking criteria
+    for word in search_words:
+        if word in inverted_index:
+            for url, frequency in inverted_index[word].items():
+                if url not in page_scores:
+                    page_scores[url] = 0
+                page_scores[url] += frequency
 
-    ## Regular find words
-    
-    # Attaches urls to a set for each word
-    for i in range (0, len(words)):
-        word_urls(words[i], i)
-    
+    # Sort pages based on ranking criteria
+    sorted_pages = sorted(page_scores.items(), key=lambda x: (-x[1], x[0]))
 
-    # Three tier intersection
-    for i in range (0, len(url_list) - 1):
-        intersection_set = url_list[i].intersection(url_list[i+1])
-
-    # Two tier intersection 
-
-    if len(words) == 3:
-        set0_set1 = {}
-        set0_set2 = {}
-        set1_set2 = {}
-
-        set0_set1 = url_list[0].intersection(url_list[1])
-        set0_set2 = url_list[0].intersection(url_list[2])
-        set1_set2 = url_list[1].intersection(url_list[2])
-
-        
-        print ("\nIntersection of URLs containing words : ", words)
-        pprint.pp(intersection_set)
-        print("\n")
-
-        print("\nTwo-pair intersections : ", words[0], " ", words[1])
-        pprint.pp(intersection_set.intersection(set0_set1))
-        print("\n")
-
-        print("\nTwo-pair intersections : ", words[0], " ", words[2])
-        pprint.pp(intersection_set.intersection(set0_set2))
-        print("\n")
-
-        print("\nTwo-pair intersections : ", words[1], " ", words[2])
-        pprint.pp(intersection_set.intersection(set1_set2))
-        print("\n")
-
-        known_url_set = set()  # Initialize known_url_set as an empty set
-
-        known_url_set.update(intersection_set)
-        known_url_set.update(set0_set1)
-        known_url_set.update(set0_set2)
-        known_url_set.update(set1_set2)
-
-
-    # Nice print of all the urls that contain a word
-    for i in range (0, len(url_list)):
-        print("Word : " + words[i])
-        if len(words) == 3:
-            url_list[i] = url_list[i] - known_url_set
-        pprint.pp(url_list[i])
-        print("\n")
+    # Display search results
+    print("Search Results:")
+    for url, score in sorted_pages:
+        print(f"{url} - Score: {score}")
 
 
 
