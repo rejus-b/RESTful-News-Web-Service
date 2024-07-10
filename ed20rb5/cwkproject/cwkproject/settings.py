@@ -19,13 +19,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-y3l0(^e*s@#)$-vne1fkm+bod&g83r+w-yje(nubt+-ss#0*n&'
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["ed20rb5.pythonanywhere.com"]
+ALLOWED_HOSTS = []
 
 # import django.contrib.sessions.backends.db
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
