@@ -15,11 +15,9 @@
                 e.g. `news -id=RRB03 -date=2024-02-10`
     list - Lists 20 random active news agencies
 
-2. https://ed20rb5.pythonanywhere.com/
+2. (Link no longer working)
 
-3.  Ammar's secure account details are:
-    Username = ammar
-    Password = securepassword123
+3. (Redacted author account details)
 
     This can be used to log into the service and act as an author.
 
